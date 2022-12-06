@@ -2,8 +2,7 @@ name: review
 
 on:
   push:
-    branches: [dev]
-
+    branches: [main]
 
   workflow_call:
     inputs:
@@ -13,11 +12,11 @@ on:
       registry_path:
         type: string
         required: true
-      domain:
+      prod_url:
         required: true
         type: string
       env_path:
-        default: .env.staging
+        default: .env.prod
         required: true
         type: string
     secrets:
@@ -36,6 +35,21 @@ jobs:
       - name: Set outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "octocat@github.com"
+      - name: Prod - Increment version & create build # incrementing version automatically creates build internally with new version
+        run: npm version patch -m "[skip ci] %s"
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          CI: false
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
       - name: Get package info
         id: package
         uses: codex-team/action-nodejs-package-info@v1.1
@@ -59,7 +73,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: "${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }}"
+          tags: "${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }}"
           cache-from: type=gha
           cache-to: type=gha,mode=max
       -
@@ -69,15 +83,15 @@ jobs:
           echo "Updating image tag version ..."
           cd ${{ inputs.argo_template_path }}
           mkdir -p ${{ steps.package.outputs.name }}
-          cp .stagingapp.yaml.template ${{ steps.package.outputs.name }}/staging-app.yaml
-          sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
-          sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
-          sed -i"" -e "s/RA_URL/${{ steps.package.outputs.name }}-${{ steps.vars.outputs.sha_short }}.${{ inputs.domain }}/g" ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
+          cp .prodapp.yaml.template ${{ steps.package.outputs.name }}/prod-app.yaml
+          sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/prod-app.yaml
+          sed -i"" -e "s/VERSION_TAG/${{ steps.package.outputs.version }}/g"          ${{ steps.package.outputs.name }}/prod-app.yaml
+          sed -i"" -e "s/PROD_URL/${{ inputs.prod_url }}/g" ${{ steps.package.outputs.name }}/prod-app.yaml
           echo "Pushing changes to argocd application repo ..."
           git config --global user.name "github-actions"
           git config --global user.email "octocat@github.com"
           git add -A
-          git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }} from commit ${{ steps.vars.outputs.sha_short }}"
+          git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }} from commit ${{ steps.vars.outputs.sha_short }}"
           git push ${{secrets.repo_auth_url}} main
 
 
