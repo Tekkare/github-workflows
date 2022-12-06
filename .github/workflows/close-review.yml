@@ -10,6 +10,7 @@ on:
         required: true
         type: string
     secrets:
+      #https://username:token@repoaddress.git:
       repo_auth_url:
         required: true
 
