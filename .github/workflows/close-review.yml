@@ -1,0 +1,43 @@
+name: review-close
+
+# only trigger on pull request closed events
+on:
+  pull_request:
+    types: [ closed ]
+  workflow_call:
+    inputs:
+      argo_template_path:
+        required: true
+        type: string
+    secrets:
+      repo_auth_url:
+        required: true
+
+jobs:
+  delete-deployment:
+    if: ${{ github.ref != 'refs/heads/dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      - name: Set outputs
+        id: vars
+        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Get package info
+        id: package
+        uses: codex-team/action-nodejs-package-info@v1.1
+      -
+        name: deploy
+        run: |
+          git clone ${{secrets.repo_auth_url}} -b main
+          echo "Deleting review deployment ..."
+          cd ${{ inputs.argo-template-path }}
+          rm ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
+          git config --global user.name "github-actions"
+          git config --global user.email "octocat@github.com"
+          git add -A
+          git commit -m "[Cloud Builder] removing review deployment"
+          git push ${{secrets.repo_auth_url}} main
+
+
