@@ -1,9 +1,6 @@
 name: review
 
 on:
-  push:
-    branches: [main]
-
   workflow_call:
     inputs:
       argo_template_path:

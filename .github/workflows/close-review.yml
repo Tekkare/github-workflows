@@ -2,8 +2,7 @@ name: review-close
 
 # only trigger on pull request closed events
 on:
-  pull_request:
-    types: [ closed ]
+
   workflow_call:
     inputs:
       argo_template_path:

@@ -1,8 +1,6 @@
 name: review
 
 on:
-  pull_request:
-    types: [opened, reopened, synchronize]
   workflow_call:
     inputs:
       argo_template_path:
