@@ -27,9 +27,11 @@ jobs:
     if: ${{ github.ref != 'refs/heads/dev' }}
     runs-on: ubuntu-latest
     steps:
+      - run: echo ${{github.ref}}
       -
         name: Checkout
         uses: actions/checkout@v3
+      - run: echo ${{github.ref}}
       - name: Set outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
