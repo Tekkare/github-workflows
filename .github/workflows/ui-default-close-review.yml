@@ -14,7 +14,7 @@ on:
 
 jobs:
   delete-deployment:
-    if: github.head_ref != 'refs/heads/dev'
+    if: github.head_ref != 'dev'
     runs-on: ubuntu-latest
     steps:
       - run: echo ${{github.head_ref}}
