@@ -17,6 +17,7 @@ jobs:
     if: github.head_ref != 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
+      - run: echo ${{github.head_ref}}
       -
         name: Checkout
         uses: actions/checkout@v3
