@@ -24,14 +24,12 @@ on:
         required: true
 jobs:
   package:
-    if: ${{ github.ref != 'refs/heads/dev' }}
+    if: github.head_ref != 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{github.head_ref}}
       -
         name: Checkout
         uses: actions/checkout@v3
-      - run: echo ${{github.ref}}
       - name: Set outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
