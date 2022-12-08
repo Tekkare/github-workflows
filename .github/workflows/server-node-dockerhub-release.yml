@@ -49,8 +49,7 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "octocat@github.com"
       - name: Prod - Increment version & create build # incrementing version automatically creates build internally with new version
-        working-directory: ${{inputs.context}}
-        run: npm version patch -m "[skip ci] %s"
+        run: cd ${{ inputs.context }} && npm version patch -m "[skip ci] %s"
         if: ${{ github.ref == 'refs/heads/main' }}
         env:
           CI: false
@@ -60,11 +59,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
           tags: true
-
       - name: Get package info
         id: package
+        path: ${{inputs.context}}/package.json
         uses: codex-team/action-nodejs-package-info@v1.1
-        working-directory: ${{inputs.context}}
+
       - name: Log in to Docker Hub
         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
