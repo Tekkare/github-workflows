@@ -76,7 +76,7 @@ jobs:
         with:
           context: ${{ inputs.context }}
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }}
       -
         name: deploy
         run: |
@@ -84,11 +84,11 @@ jobs:
           echo "Updating image tag version ..."
           cd ${{ secrets.argo_template_path }}
           cp ${{ inputs.argo_template_name }} ${{ steps.package.outputs.name }}.yaml
-          sed -i"" -e "s/IMAGE_TAG/${{ steps.package.outputs.version }}/g"          ${{ steps.package.outputs.name }}.yaml
+          sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}.yaml
           sed -i"" -e "s#IMAGE_REPOSITORY#${{ inputs.registry_path}}#g" ${{ steps.package.outputs.name }}.yaml
           echo "Pushing changes to argocd application repo ..."
           git config --global user.name "github-actions"
           git config --global user.email "octocat@github.com"
           git add -A
-          git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }} from commit ${{ steps.vars.outputs.sha_short }}"
+          git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }} from commit ${{ steps.vars.outputs.sha_short }}"
           git push ${{secrets.repo_auth_url}} main
