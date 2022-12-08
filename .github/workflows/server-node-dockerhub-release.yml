@@ -86,7 +86,6 @@ jobs:
           cp ${{ inputs.argo_template_name }} ${{ steps.package.outputs.name }}.yaml
           sed -i"" -e "s/IMAGE_TAG/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}.yaml
           sed -i"" -e "s/IMAGE_REPOSITORY/${{ inputs.registry_path }}/g"          ${{ steps.package.outputs.name }}.yaml
-         
           echo "Pushing changes to argocd application repo ..."
           git config --global user.name "github-actions"
           git config --global user.email "octocat@github.com"
