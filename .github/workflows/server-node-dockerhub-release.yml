@@ -24,7 +24,6 @@ on:
       #https://username:token@repoaddress.git:
       argo_template_path:
         required: true
-        type: string
       repo_auth_url:
         required: true
       DOCKER_USERNAME:
