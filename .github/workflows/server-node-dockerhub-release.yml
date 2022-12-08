@@ -11,6 +11,9 @@ name: Release Server Image
 on:
   workflow_call:
     inputs:
+      context:
+        default: .
+        type: string
       registry_path:
         required: true
         type: string
@@ -70,7 +73,7 @@ jobs:
       - name: Build and push Docker images
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
-          context: ./server
+          context: ${{ inputs.context }}
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }}
       -
