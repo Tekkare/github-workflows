@@ -27,7 +27,7 @@ on:
         type: string
       repo_auth_url:
         required: true
-      DOCKER_HUB_USERNAME:
+      DOCKER_USERNAME:
         required: true
       DOCKERHUB_TOKEN:
         required: true
