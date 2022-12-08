@@ -62,7 +62,7 @@ jobs:
       - name: Get package info
         id: package
         with:
-          path: ${{inputs.context}}/package.json
+          path: ${{inputs.context}}
         uses: codex-team/action-nodejs-package-info@v1.1
 
       - name: Log in to Docker Hub
