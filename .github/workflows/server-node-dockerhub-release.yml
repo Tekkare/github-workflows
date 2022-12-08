@@ -61,7 +61,8 @@ jobs:
           tags: true
       - name: Get package info
         id: package
-        path: ${{inputs.context}}/package.json
+        with:
+          path: ${{inputs.context}}/package.json
         uses: codex-team/action-nodejs-package-info@v1.1
 
       - name: Log in to Docker Hub
