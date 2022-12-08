@@ -1,0 +1,89 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning.
+
+name: Release Server Image
+on:
+  workflow_call:
+    inputs:
+      registry_path:
+        required: true
+        type: string
+      argo_template_name:
+        required: true
+        type: string
+    secrets:
+      #https://username:token@repoaddress.git:
+      argo_template_path:
+        required: true
+        type: string
+      repo_auth_url:
+        required: true
+      DOCKER_HUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
+        required: true
+
+jobs:
+  push_to_registries:
+    name: Push Docker image to multiple registries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      - name: Declare some variables
+        id: vars
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "octocat@github.com"
+      - name: Prod - Increment version & create build # incrementing version automatically creates build internally with new version
+        run: npm version patch -m "[skip ci] %s"
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          CI: false
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+          tags: true
+
+      - name: Get package info
+        id: package
+        uses: codex-team/action-nodejs-package-info@v1.1
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: ./server
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }}
+      -
+        name: deploy
+        run: |
+          git clone ${{secrets.repo_auth_url}} -b main
+          echo "Updating image tag version ..."
+          cd ${{ secrets.argo_template_path }}
+          cp ${{ inputs.argo_template_name }} ${{ steps.package.outputs.name }}.yaml
+          sed -i"" -e "s/IMAGE_TAG/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}.yaml
+          echo "Pushing changes to argocd application repo ..."
+          git config --global user.name "github-actions"
+          git config --global user.email "octocat@github.com"
+          git add -A
+          git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.package.outputs.version }} from commit ${{ steps.vars.outputs.sha_short }}"
+          git push ${{secrets.repo_auth_url}} main
