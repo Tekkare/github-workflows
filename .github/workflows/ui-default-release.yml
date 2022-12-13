@@ -24,7 +24,9 @@ on:
         required: true
 jobs:
   package:
-    environment: review
+    environment:
+      name: prod
+      url: https://${{ inputs.prod_url }}
     runs-on: ubuntu-latest
     steps:
       -

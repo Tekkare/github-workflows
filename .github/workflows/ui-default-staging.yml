@@ -25,7 +25,9 @@ on:
         required: true
 jobs:
   package:
-    environment: staging
+    environment:
+      name: staging
+      url: https://${{ steps.package.outputs.name }}.${{ inputs.domain }}
     runs-on: ubuntu-latest
     steps:
       -

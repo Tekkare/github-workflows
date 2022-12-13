@@ -24,7 +24,9 @@ on:
         required: true
 jobs:
   package:
-    environment: review
+    environment:
+      name: review
+      url: https://${{ steps.package.outputs.name }}-${{ steps.vars.outputs.sha_short }}.${{ inputs.domain }}
     if: github.head_ref != 'dev'
     runs-on: ubuntu-latest
     steps:
