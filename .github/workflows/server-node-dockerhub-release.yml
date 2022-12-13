@@ -24,7 +24,7 @@ on:
       #https://username:token@repoaddress.git:
       argo_template_path:
         required: true
-      repo_auth_url:
+      gitops_auth_url:
         required: true
       DOCKER_USERNAME:
         required: true
@@ -80,7 +80,7 @@ jobs:
       -
         name: deploy
         run: |
-          git clone ${{secrets.repo_auth_url}} -b main
+          git clone ${{secrets.gitops_auth_url}} -b main
           echo "Updating image tag version ..."
           cd ${{ secrets.argo_template_path }}
           cp ${{ inputs.argo_template_name }} ${{ steps.package.outputs.name }}.yaml
@@ -91,4 +91,4 @@ jobs:
           git config --global user.email "octocat@github.com"
           git add -A
           git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }} from commit ${{ steps.vars.outputs.sha_short }}"
-          git push ${{secrets.repo_auth_url}} main
+          git push ${{secrets.gitops_auth_url}} main
