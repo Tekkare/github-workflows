@@ -24,6 +24,7 @@ on:
         required: true
 jobs:
   package:
+    environment: review
     runs-on: ubuntu-latest
     steps:
       -
