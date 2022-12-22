@@ -70,10 +70,10 @@ jobs:
           echo "Updating image tag version ..."
           cd ${{ inputs.argo_template_path }}
           mkdir -p ${{ steps.package.outputs.name }}
-          cp .reviewapp.yaml.template ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
-          sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
-          sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
-          sed -i"" -e "s/RA_URL/${{ steps.package.outputs.name }}-${{ steps.vars.outputs.sha_short }}.${{ inputs.domain }}/g" ${{ steps.package.outputs.name }}/review-app-${{ steps.vars.outputs.sha_short }}.yaml
+          cp .reviewapp.yaml.template ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+          sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+          sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+          sed -i"" -e "s/RA_URL/${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.${{ inputs.domain }}/g" ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
           echo "Pushing changes to argocd application repo ..."
           git config --global user.name "github-actions"
           git config --global user.email "octocat@github.com"
