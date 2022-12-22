@@ -65,6 +65,7 @@ jobs:
       -
         name: deploy
         run: |
+          echo ${{ github.event.number }}
           git clone ${{secrets.gitops_auth_url}} -b main
           echo "Updating image tag version ..."
           cd ${{ inputs.argo_template_path }}

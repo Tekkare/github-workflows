@@ -31,6 +31,7 @@ jobs:
       -
         name: deploy
         run: |
+          echo ${{ github.event.number }}
           git clone ${{secrets.gitops_auth_url}} -b main
           echo "Deleting review deployment ..."
           cd ${{ inputs.argo_template_path }}
