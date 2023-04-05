@@ -95,4 +95,4 @@ jobs:
           MESSAGE="### ![#04E200](https://via.placeholder.com/15/04E200/000000?text=+)**$REPO_NAME_FORMATTED**\n\n**Title:** $PR_TITLE\n\n**Author:** \`$PR_AUTHOR\`\n\n![#800080](https://via.placeholder.com/15/800080/000000?text=+) **Deployment URL:** $DEPLOYMENT_URL\n\n**Destination:** $DESTINATION\n\n**Description:**\n\n> $PR_DESCRIPTION\n\n**URL:** $PR_URL"
 
 
-          curl -H "Content-Type: application/json" -d '{\"@type\": \"MessageCard\",\"@context\": \"http://schema.org/extensions\",\"text\": \"$MESSAGE\", \"markdown\": false}' $TEAMS_WEBHOOK_URL
+          curl -H "Content-Type: application/json" -d "{\"@type\": \"MessageCard\",\"@context\": \"http://schema.org/extensions\",\"text\": \"$MESSAGE\", \"markdown\": true}" $TEAMS_WEBHOOK_URL
