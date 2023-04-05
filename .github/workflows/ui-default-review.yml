@@ -79,12 +79,13 @@ jobs:
       - name: Send notification to Microsoft Teams
         env:
           TEAMS_WEBHOOK_URL: ${{ secrets.OIP_UI_REVIEW_WEBHOOK_URL}}
-          DOMAIN: ${{ secrets.DOMAIN }}
+          DOMAIN: ${{ inputs.domain }}
         run: |
           DEPLOYMENT_URL="https://${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.$DOMAIN"
           PR_TITLE="${{ github.event.pull_request.title }}"
           PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
-          MESSAGE="A new pull request has been created:\n\nTitle: $PR_TITLE\nAuthor: $PR_AUTHOR\nDeployment URL: $DEPLOYMENT_URL\nURL: $PR_URL"
+          PR_DESCRIPTION="${{ github.event.pull_request.body }}"
+          MESSAGE="**A new pull request has been created:**\n\n**Title:** $PR_TITLE\n\n**Author:** $PR_AUTHOR\n\n**Deployment URL:** $DEPLOYMENT_URL\n\n**URL:** $PR_URL\n\n**Description:**\n\n> $PR_DESCRIPTION"
 
           curl -H "Content-Type: application/json" -d "{\"@type\": \"MessageCard\",\"@context\": \"http://schema.org/extensions\",\"text\": \"$MESSAGE\"}" $TEAMS_WEBHOOK_URL
