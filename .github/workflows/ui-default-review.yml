@@ -81,11 +81,19 @@ jobs:
           TEAMS_WEBHOOK_URL: ${{ secrets.OIP_UI_REVIEW_WEBHOOK_URL}}
           DOMAIN: ${{ inputs.domain }}
         run: |
+          REPO_NAME_FORMATTED=$(echo "$REPO_NAME" | sed 's/_/ /g')
           DEPLOYMENT_URL="https://${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.$DOMAIN"
           PR_TITLE="${{ github.event.pull_request.title }}"
           PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
           PR_DESCRIPTION="${{ github.event.pull_request.body }}"
-          MESSAGE="**A new pull request has been created:**\n\n**Title:** $PR_TITLE\n\n**Author:** $PR_AUTHOR\n\n**Deployment URL:** $DEPLOYMENT_URL\n\n**URL:** $PR_URL\n\n**Description:**\n\n> $PR_DESCRIPTION"
+          DESTINATION_BRANCH="${{ github.event.pull_request.base.ref }}"
+          DESTINATION="STAGING"
+          if [ "$DESTINATION_BRANCH" == "main" ]; then
+            DESTINATION="PRODUCTION"
+          fi
+          MESSAGE="<h1><b>$REPO_NAME_FORMATTED</b></h1><br><br><b>App preview available:</b><br><br><b>Title:</b> $PR_TITLE<br><br><b>Author:</b> <span style=\"background-color:black;color:white\">$PR_AUTHOR</span><br><br><span style=\"color:purple\"><b>Preview URL:</b></span> $DEPLOYMENT_URL<br><br><b>Destination:</b> $DESTINATION<br><br><b>Description:</b><br><br><blockquote>$PR_DESCRIPTION</blockquote><br><br><b>URL:</b> $PR_URL"
+
+
 
           curl -H "Content-Type: application/json" -d "{\"@type\": \"MessageCard\",\"@context\": \"http://schema.org/extensions\",\"text\": \"$MESSAGE\"}" $TEAMS_WEBHOOK_URL
