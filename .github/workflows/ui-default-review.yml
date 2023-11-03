@@ -35,64 +35,63 @@ jobs:
       - name: Set outputs
         id: vars
         run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-      - name: Get package info
-        id: package
-        uses: codex-team/action-nodejs-package-info@v1.1
-      - name: Login to GCR
-        uses: docker/login-action@v2
-        with:
-          registry: eu.gcr.io
-          username: _json_key
-          password: ${{ secrets.GCR_JSON_KEY }}
-      - name: set .env to use for build
-        run: |
-          mv ${{ inputs.env_path }} .env
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build and push
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          push: true
-          tags: "${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }}"
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: deploy
-        run: |
-          echo ${{ github.event.number }}
-          git clone ${{secrets.gitops_auth_url}} -b main
-          echo "Updating image tag version ..."
-          cd ${{ inputs.argo_template_path }}
-          mkdir -p ${{ steps.package.outputs.name }}
-          cp .reviewapp.yaml.template ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
-          sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
-          sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
-          sed -i"" -e "s/RELEASE_ID/pr-${{ github.event.number }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
-          sed -i"" -e "s/RA_URL/${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.${{ inputs.domain }}/g" ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
-          echo "Pushing changes to argocd application repo ..."
-          git config --global user.name "github-actions"
-          git config --global user.email "octocat@github.com"
-          git add -A
-          git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }} from commit ${{ steps.vars.outputs.sha_short }}"
-          git push ${{secrets.gitops_auth_url}} main
+      # - name: Get package info
+      #   id: package
+      #   uses: codex-team/action-nodejs-package-info@v1.1
+      # - name: Login to GCR
+      #   uses: docker/login-action@v2
+      #   with:
+      #     registry: eu.gcr.io
+      #     username: _json_key
+      #     password: ${{ secrets.GCR_JSON_KEY }}
+      # - name: set .env to use for build
+      #   run: |
+      #     mv ${{ inputs.env_path }} .env
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
+      # - name: Build and push
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: "${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }}"
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      # - name: deploy
+      #   run: |
+      #     echo ${{ github.event.number }}
+      #     git clone ${{secrets.gitops_auth_url}} -b main
+      #     echo "Updating image tag version ..."
+      #     cd ${{ inputs.argo_template_path }}
+      #     mkdir -p ${{ steps.package.outputs.name }}
+      #     cp .reviewapp.yaml.template ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+      #     sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+      #     sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+      #     sed -i"" -e "s/RELEASE_ID/pr-${{ github.event.number }}/g"          ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+      #     sed -i"" -e "s/RA_URL/${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.${{ inputs.domain }}/g" ${{ steps.package.outputs.name }}/review-app-${{ github.event.number }}.yaml
+      #     echo "Pushing changes to argocd application repo ..."
+      #     git config --global user.name "github-actions"
+      #     git config --global user.email "octocat@github.com"
+      #     git add -A
+      #     git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }} from commit ${{ steps.vars.outputs.sha_short }}"
+      #     git push ${{secrets.gitops_auth_url}} main
 
-      - name: Send notification to Microsoft Teams
-        env:
-          TEAMS_WEBHOOK_URL: ${{ secrets.OIP_UI_REVIEW_WEBHOOK_URL}}
-          DOMAIN: ${{ inputs.domain }}
-        run: |
-          REPO_NAME_FORMATTED=$(echo ${{ steps.package.outputs.name }} | sed 's/_/ /g')
-          DEPLOYMENT_URL="https://${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.$DOMAIN"
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
-          PR_URL="${{ github.event.pull_request.html_url }}"
-          PR_DESCRIPTION="${{ github.event.pull_request.body }}"
-          DESTINATION_BRANCH="${{ github.event.pull_request.base.ref }}"
-          DESTINATION="STAGING"
-          if [ "$DESTINATION_BRANCH" == "main" ]; then
-            DESTINATION="PRODUCTION"
-          fi
-          MESSAGE="### ![#04E200](https://via.placeholder.com/15/04E200/000000?text=+) $REPO_NAME_FORMATTED \n\n**Title:** $PR_TITLE\n\n**Author:** \`$PR_AUTHOR\`\n\n![#800080](https://via.placeholder.com/15/800080/000000?text=+) **Deployment URL:** $DEPLOYMENT_URL\n\n**Destination:** $DESTINATION\n\n**Description:**\n\n> $PR_DESCRIPTION\n\n**URL:** $PR_URL"
+      # - name: Send notification to Microsoft Teams
+      #   env:
+      #     TEAMS_WEBHOOK_URL: ${{ secrets.OIP_UI_REVIEW_WEBHOOK_URL}}
+      #     DOMAIN: ${{ inputs.domain }}
+      #   run: |
+      #     REPO_NAME_FORMATTED=$(echo ${{ steps.package.outputs.name }} | sed 's/_/ /g')
+      #     DEPLOYMENT_URL="https://${{ steps.package.outputs.name }}-pr-${{ github.event.number }}.$DOMAIN"
+      #     PR_TITLE="${{ github.event.pull_request.title }}"
+      #     PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+      #     PR_URL="${{ github.event.pull_request.html_url }}"
+      #     PR_DESCRIPTION="${{ github.event.pull_request.body }}"
+      #     DESTINATION_BRANCH="${{ github.event.pull_request.base.ref }}"
+      #     DESTINATION="STAGING"
+      #     if [ "$DESTINATION_BRANCH" == "main" ]; then
+      #       DESTINATION="PRODUCTION"
+      #     fi
+      #     MESSAGE="### ![#04E200](https://via.placeholder.com/15/04E200/000000?text=+) $REPO_NAME_FORMATTED \n\n**Title:** $PR_TITLE\n\n**Author:** \`$PR_AUTHOR\`\n\n![#800080](https://via.placeholder.com/15/800080/000000?text=+) **Deployment URL:** $DEPLOYMENT_URL\n\n**Destination:** $DESTINATION\n\n**Description:**\n\n> $PR_DESCRIPTION\n\n**URL:** $PR_URL"
 
-
-          curl -H "Content-Type: application/json" -d "{\"@type\": \"MessageCard\",\"@context\": \"http://schema.org/extensions\",\"text\": \"$MESSAGE\", \"markdown\": true}" $TEAMS_WEBHOOK_URL
+      #     curl -H "Content-Type: application/json" -d "{\"@type\": \"MessageCard\",\"@context\": \"http://schema.org/extensions\",\"text\": \"$MESSAGE\", \"markdown\": false, \"sections\": [{ \"images\": [{ \"image\": \"https://rcd-media.com/microsoftteamwebhooks/apppreview.png\" }] }]}" $TEAMS_WEBHOOK_URL
