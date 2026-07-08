@@ -17,6 +17,12 @@ on:
         default: .env.staging
         required: true
         type: string
+      # ArgoCD Application template to stamp out. Use .stagingapp-ssr.yaml.template
+      # for apps that run the Nitro server (server/api routes) instead of a static SPA.
+      argo_template_file:
+        default: .stagingapp.yaml.template
+        required: false
+        type: string
     secrets:
       #https://username:token@repoaddress.git:
       gitops_auth_url:
@@ -69,7 +75,7 @@ jobs:
           echo "Updating image tag version ..."
           cd ${{ inputs.argo_template_path }}
           mkdir -p ${{ steps.package.outputs.name }}
-          cp .stagingapp.yaml.template ${{ steps.package.outputs.name }}/staging-app.yaml
+          cp ${{ inputs.argo_template_file }} ${{ steps.package.outputs.name }}/staging-app.yaml
           sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/staging-app.yaml
           sed -i"" -e "s/IMAGE_TAG/${{ steps.vars.outputs.sha_short }}/g"          ${{ steps.package.outputs.name }}/staging-app.yaml
           sed -i"" -e "s/DOMAIN_NAME/${{ inputs.domain }}/g" ${{ steps.package.outputs.name }}/staging-app.yaml
