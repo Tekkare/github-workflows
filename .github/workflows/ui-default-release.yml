@@ -16,6 +16,12 @@ on:
         default: .env.prod
         required: true
         type: string
+      # ArgoCD Application template to stamp out. Use .prodapp-ssr.yaml.template
+      # for apps that run the Nitro server (server/api routes) instead of a static SPA.
+      argo_template_file:
+        default: .prodapp.yaml.template
+        required: false
+        type: string
     secrets:
       #https://username:token@repoaddress.git:
       gitops_auth_url:
@@ -83,7 +89,7 @@ jobs:
           echo "Updating image tag version ..."
           cd ${{ inputs.argo_template_path }}
           mkdir -p ${{ steps.package.outputs.name }}
-          cp .prodapp.yaml.template ${{ steps.package.outputs.name }}/prod-app.yaml
+          cp ${{ inputs.argo_template_file }} ${{ steps.package.outputs.name }}/prod-app.yaml
           sed -i"" -e "s/APP_NAME/${{ steps.package.outputs.name }}/g"          ${{ steps.package.outputs.name }}/prod-app.yaml
           sed -i"" -e "s/VERSION_TAG/${{ steps.package.outputs.version }}/g"          ${{ steps.package.outputs.name }}/prod-app.yaml
           sed -i"" -e "s/PROD_URL/${{ inputs.prod_url }}/g" ${{ steps.package.outputs.name }}/prod-app.yaml
