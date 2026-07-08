@@ -84,6 +84,20 @@ jobs:
           git config --global user.email "octocat@github.com"
           git add -A
           git commit -m "[Cloud Builder] Updated image tag ${{ inputs.registry_path }}/${{ steps.package.outputs.name }}:${{ steps.vars.outputs.sha_short }} from commit ${{ steps.vars.outputs.sha_short }}"
-          git push ${{secrets.gitops_auth_url}} main
+          # The argocd repo is shared across apps: a concurrent deploy can advance
+          # main between clone and push, causing a non-fast-forward rejection.
+          # Rebase onto the latest main and retry instead of failing.
+          for attempt in 1 2 3 4 5; do
+            if git push ${{secrets.gitops_auth_url}} main; then
+              echo "Pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt) — rebasing onto latest main ..."
+            git fetch ${{secrets.gitops_auth_url}} main
+            git rebase FETCH_HEAD || { git rebase --abort; echo "Rebase conflict — aborting"; exit 1; }
+            sleep $((RANDOM % 5 + 2))
+          done
+          echo "Failed to push after 5 attempts"
+          exit 1
 
 
