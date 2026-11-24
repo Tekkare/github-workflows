@@ -31,6 +31,14 @@ on:
         required: true
 jobs:
   package:
+    # One staging build per app at a time. A running build always finishes;
+    # pushes that land meanwhile queue, and GitHub keeps only the newest
+    # pending run (it already contains the skipped commits). Saves a full
+    # Docker build per burst of pushes to dev.
+    # github.repository is the caller (app) repo, so apps never block each other.
+    concurrency:
+      group: ui-staging-${{ github.repository }}
+      cancel-in-progress: false
     environment:
       name: staging
       url: https://${{ steps.package.outputs.name }}.${{ inputs.domain }}
